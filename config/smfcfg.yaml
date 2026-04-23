@@ -33,6 +33,14 @@ configuration:
           dns: # the IP address of DNS
             ipv4: 8.8.8.8
             ipv6: 2001:4860:4860::8888
+    - sNssai: # S-NSSAI (Single Network Slice Selection Assistance Information)
+        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sd: 000001 # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+      dnnInfos: # DNN information list
+        - dnn: internet # Data Network Name
+          dns: # the IP address of DNS
+            ipv4: 8.8.8.8
+            ipv6: 2001:4860:4860::8888
   plmnList: # the list of PLMN IDs that this SMF belongs to (optional, remove this key when unnecessary)
     - mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
       mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
@@ -75,9 +83,29 @@ configuration:
               - upf.free5gc.org
             networkInstances: # Data Network Name (DNN)
               - internet
+      UPF2: # the name of the node
+        type: UPF # the type of the node (AN or UPF)
+        nodeID: 0.0.0.0 # the Node ID of this UPF (Private IP, resolved at runtime)
+        addr: 0.0.0.0 # the IP/FQDN of N4 interface on this UPF (PFCP)
+        sNssaiUpfInfos: # S-NSSAI information list for this UPF
+          - sNssai: # S-NSSAI (Single Network Slice Selection Assistance Information)
+              sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+              sd: 000001 # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+            dnnUpfInfoList: # DNN information list for this S-NSSAI
+              - dnn: internet
+                pools:
+                  - cidr: 10.62.0.0/16
+        interfaces: # Interface list for this UPF
+          - interfaceType: N3 # the type of the interface (N3 or N9)
+            endpoints: # the IP address of this N3/N9 interface on this UPF
+              - 0.0.0.0
+            networkInstances: # Data Network Name (DNN)
+              - internet
     links: # the topology graph of userplane, A and B represent the two nodes of each link
       - A: gNB1
         B: UPF
+      - A: gNB1
+        B: UPF2
   # retransmission timer for pdu session modification command
   t3591:
     enable: true # true or false
@@ -95,19 +123,17 @@ configuration:
   requestedUnit: 1000
 
   # Metrics configuration
-  # If using the same bindingIPv4 as the sbi server, make sure that the ports are different
   metrics:
-    enable: false # (Optional, default false)
-    scheme: http # (Required) the protocol for metrics (http or https, default https)
-    bindingIPv4: smf.free5gc.org # (Required) IP used to bind the metrics endpoint (default 0.0.0.0)
-    port: 9091 # (Optional, default 9091) port used to bind the service
-    tls: # (Optional) the local path of TLS key (Could be the same as the sbi ones)
-      pem: cert/smf.pem # SMF TLS Certificate
-      key: cert/smf.key # SMF TLS Private key
-    namespace: free5gc # (Optional, default free5gc)
+    enable: false
+    scheme: http
+    bindingIPv4: smf.free5gc.org
+    port: 9091
+    tls:
+      pem: cert/smf.pem
+      key: cert/smf.key
+    namespace: free5gc
 
 logger: # log output setting
   enable: true # true or false
   level: info # how detailed to output, value: trace, debug, info, warn, error, fatal, panic
   reportCaller: false # enable the caller report or not, value: true or false
-
